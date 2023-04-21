@@ -306,5 +306,7 @@ pyrightconfig.json
 .ionide
 
 lmd_full/
+data/
+toy_data/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,pycharm,python
