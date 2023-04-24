@@ -1,0 +1,2 @@
+export MODEL='figaro-expert' D_MODEL=512 CONTEXT_SIZE=256 BATCH_SIZE=32 MAX_LEN=1000 MAX_EPOCH=10000
+python3 train.py
