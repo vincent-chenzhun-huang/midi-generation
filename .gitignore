@@ -310,3 +310,11 @@ data/
 toy_data/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,pycharm,python
+
+# midi files
+*.mid
+./.vscode/
+./artsml/
+*.code-workspace
+*.ckpt
+wandb/
