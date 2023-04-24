@@ -36,11 +36,9 @@ class MidiDataset(IterableDataset):
                  context_size=512,
                  shuffle=False,
                  debug=False):
-        print(root, partition)
         self.files = sorted([os.path.join(root, partition, f) for f in os.listdir(os.path.join(root, partition))])
         if shuffle:
             random.shuffle(self.files)
-        print(self.files)
         self.group_bars = group_bars
         self.max_len = max_len
         self.max_bars = max_bars

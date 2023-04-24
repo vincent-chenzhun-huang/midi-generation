@@ -316,3 +316,5 @@ toy_data/
 ./.vscode/
 ./artsml/
 *.code-workspace
+*.ckpt
+wandb/
