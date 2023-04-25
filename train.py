@@ -11,7 +11,6 @@ from vocab import RemiVocab, DescriptionVocab
 from constants import PAD_TOKEN, EOS_TOKEN, BAR_KEY, POSITION_KEY
 from itertools import cycle, islice
 from tqdm import tqdm
-import pytorch_lightning as pl
 
 import transformers
 from transformers import (
@@ -23,8 +22,6 @@ from transformers import (
 import os
 import glob
 
-import wandb
-
 from models.seq2seq import Seq2SeqModule
 # from models.seq2seq_org import Seq2SeqModule as Seq2SeqModuleOrg
 
@@ -35,20 +32,20 @@ OUTPUT_DIR = os.getenv('OUTPUT_DIR', './results')
 LOGGING_DIR = os.getenv('LOGGING_DIR', './logs')
 MAX_N_FILES = int(os.getenv('MAX_N_FILES', -1))
 
-MODEL = os.getenv('MODEL', None)
+MODEL = os.getenv('MODEL', 'figaro-expert-testrun')
 MODEL_NAME = os.getenv('MODEL_NAME', None)
 N_CODES = int(os.getenv('N_CODES', 2048))
 N_GROUPS = int(os.getenv('N_GROUPS', 16))
 D_MODEL = int(os.getenv('D_MODEL', 512))
 D_LATENT = int(os.getenv('D_LATENT', 1024))
 
-CHECKPOINT = os.getenv('CHECKPOINT', None)
+CHECKPOINT = os.getenv('CHECKPOINT', 'figaro-expert')
 VAE_CHECKPOINT = os.getenv('VAE_CHECKPOINT', None)
 
-BATCH_SIZE = int(os.getenv('BATCH_SIZE', 128))
+BATCH_SIZE = int(os.getenv('BATCH_SIZE', 16))
 TARGET_BATCH_SIZE = int(os.getenv('TARGET_BATCH_SIZE', 512))
 
-EPOCHS = int(os.getenv('EPOCHS', '16'))
+EPOCHS = int(os.getenv('EPOCHS', '1'))
 WARMUP_STEPS = int(float(os.getenv('WARMUP_STEPS', 4000)))
 MAX_STEPS = int(float(os.getenv('MAX_STEPS', 1e20)))
 MAX_TRAINING_STEPS = int(float(os.getenv('MAX_TRAINING_STEPS', 100000)))
@@ -189,25 +186,11 @@ def train_val_loop(model):
   best_val_ppl = float('inf')
   best_epoch = 0
 
-  run = wandb.init(
-    name = "expert", ## Wandb creates random run names if you skip this field
-    reinit = True, ### Allows reinitalizing runs when you re-run this cell
-    # id = '2qd3d0vl', ### Insert specific run id here if you want to resume a previous run
-    # resume = "must", ### You need this to resume previous runs, but comment out reinit = True when using this
-    project = "artsml", ### Project should be created in your wandb account 
-    config = {} ### Wandb Config for your run
-  )
-
   for epoch in range(1, EPOCHS+1):
     print(f'epoch {epoch}')
     train_loss = train(model, train_loader, optimizer, loss_fn)
     val_loss, val_ppl = validate(model, val_loader, loss_fn)
     curr_lr = float(optimizer.param_groups[0]['lr'])
-    wandb.log({
-        'train_loss': train_loss,  
-        'val_loss': val_loss, 
-        'lr'        : curr_lr
-    })
 
     print(f'train loss: {train_loss:.3f}, val loss: {val_loss:.3f}, val ppl: {val_ppl:.3f}')
     if val_loss < best_val_loss:
@@ -236,12 +219,6 @@ def main():
   vae_module = None
 
   ### Create and train model ###
-
-  # load model from checkpoint if available
-  # wandb.login(key="99caa13ec9552adf0e92e5c30021307ce3cf7fa4")
-    # model_class = {
-    #   'figaro-expert': Seq2SeqModule,
-    # }[MODEL]
   seq2seq_kwargs = {
     'encoder_layers': 4,
     'decoder_layers': 6,
@@ -263,13 +240,14 @@ def main():
   if CHECKPOINT:
     # ckpt = Seq2SeqModuleOrg.load_from_checkpoint("./checkpoints/" + CHECKPOINT + ".ckpt")
     # torch.save(ckpt.state_dict(), "./checkpoints/" + CHECKPOINT + ".sd")
-    ckpt = torch.load("./checkpoints/" + CHECKPOINT + ".ckpt")
+    ckpt = torch.load("./checkpoints/" + CHECKPOINT + ".pth")
     # print(ckpt.keys())
-    model.load_state_dict(ckpt['state_dict'])
-    # checkpoint = torch.load("./checkpoints/" + CHECKPOINT + ".ckpt")
+    model.load_state_dict(ckpt)
+    # checkpoint = torch.load("./checkpoints/" + CHECKPOINT + ".pth")
     # print(checkpoint)
     # model.load_state_dict(checkpoint['model_state_dict'])
     # model = torch.load()['model_state_dict']
+    print('model loaded')
   train_val_loop(model)
 
 if __name__ == '__main__':
